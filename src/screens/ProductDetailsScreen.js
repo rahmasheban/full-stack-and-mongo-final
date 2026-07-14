@@ -9,10 +9,13 @@ import { useContext } from "react";
 
 import colors from "../theme/colors";
 import { CartContext } from "../context/CartContext";
+import { LanguageContext } from "../context/LanguageContext";
 
 export default function ProductDetailsScreen({ route, navigation }) {
   const { product } = route.params;
   const { addToCart } = useContext(CartContext);
+  const { language } = useContext(LanguageContext);
+  
 
   return (
     <View style={styles.container}>
@@ -22,7 +25,7 @@ export default function ProductDetailsScreen({ route, navigation }) {
       />
 
       <Text style={styles.name}>
-        {product.name}
+        {product.name[language]}
       </Text>
 
       <Text style={styles.price}>
@@ -30,7 +33,7 @@ export default function ProductDetailsScreen({ route, navigation }) {
       </Text>
 
       <Text style={styles.description}>
-        High quality skincare product suitable for daily use.
+        {product.description[language]}
       </Text>
 
       <TouchableOpacity

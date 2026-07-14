@@ -6,77 +6,233 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 
 import colors from "../theme/colors";
 import { products } from "../data/products";
+import { useContext } from "react";
+import { LanguageContext } from "../context/LanguageContext";
+import { translations } from "../data/translations";
+import { useState } from "react";
+import { FavoritesContext } from "../context/FavoritesContext";
+import { Ionicons } from "@expo/vector-icons";
+import { ThemeContext } from "../context/ThemeContext";
+import { useEffect } from "react";
+
 
 export default function HomeScreen({ navigation, route }) {
-  const user = route?.params?.user || {};
+const user = route?.params?.user || {};
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.welcome}>
-          Welcome {user.fullName || "Rahma"} 🌿
-        </Text>
+const { language, setLanguage } =
+  useContext(LanguageContext);
 
-        <Text style={styles.subtitle}>
-          Healthy skin starts with good care
-        </Text>
-      </View>
+const [search, setSearch] = useState("");
 
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>
-          Natural Beauty Collection
-        </Text>
+const filteredProducts = products.filter((item) =>
+  item.name[language]
+    .toLowerCase()
+    .includes(search.toLowerCase())
+);
 
-        <Text style={styles.bannerText}>
-          Premium skincare products for every skin type
-        </Text>
-      </View>
+const t = translations[language];
+const { favorites , toggleFavorite } = useContext(FavoritesContext);
+const { darkMode } = useContext(ThemeContext);
 
-      <Text style={styles.sectionTitle}>
-        Popular Products
-      </Text>
+const banners = [
+  require("../../assets/images/gg20%.png"),
+  require("../../assets/images/green.png"),
+  require("../../assets/images/green2.png"),
+];
 
-      <FlatList
-        data={products}
-        numColumns={2}
-        scrollEnabled={false}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.productCard}
-            onPress={() =>
-              navigation.navigate("ProductDetails", {
-                product: item,
-              })
-            }
-          >
-            <Image
-              source={item.image}
-              style={styles.productImage}
-            />
+const [currentBanner, setCurrentBanner] = useState(0);
 
-            <Text style={styles.productName}>
-              {item.name}
-            </Text>
+useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentBanner(
+      (prev) => (prev + 1) % banners.length
+    );
+  }, 2000);
 
-            <Text style={styles.price}>
-              ₪{item.price}
-            </Text>
-          </TouchableOpacity>
-        )}
+  return () => clearInterval(interval);
+}, []);
+
+ return (
+<ScrollView
+  style={[
+    styles.container,
+    {
+      backgroundColor: darkMode
+        ? "#1E1E1E"
+        : "#F8F8F8",
+    },
+  ]}
+>
+<View>
+  <Text
+    style={[
+      styles.welcome,
+      {
+        color: darkMode
+          ? "white"
+          : "#6E8B74",
+      },
+    ]}
+  >
+  </Text>
+
+  <Text style={styles.subtitle}>
+    {t.subtitle}
+  </Text>
+</View>
+<Image
+  source={banners[currentBanner]}
+  style={{
+    width: "100%",
+    height: 280,
+    borderRadius: 20,
+    marginBottom: 30,
+  }}
+/>
+
+<View style={styles.languageContainer}>
+  <TouchableOpacity
+   style={[
+  styles.langButton,
+  {
+    backgroundColor: darkMode
+      ? "#2C2C2C"
+      : "#fff",
+  },
+]}
+    onPress={() => setLanguage("en")}
+  >
+    <Text style={styles.langText}> EN</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+   style={[
+  styles.langButton,
+  {
+    backgroundColor: darkMode
+      ? "#2C2C2C"
+      : "#fff",
+  },
+]}
+    onPress={() => setLanguage("ar")}
+  >
+    <Text style={styles.langText}> AR</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+   style={[
+  styles.langButton,
+  {
+    backgroundColor: darkMode
+      ? "#2C2C2C"
+      : "#fff",
+  },
+]}
+    onPress={() => setLanguage("he")}
+  >
+    <Text style={styles.langText}> HE</Text>
+  </TouchableOpacity>
+</View>
+<TextInput
+  style={[
+    styles.searchInput,
+    {
+      backgroundColor: darkMode
+        ? "#2C2C2C"
+        : "#fff",
+      color: darkMode
+        ? "white"
+        : "black",
+    },
+  ]}
+  placeholder={t.search}
+  value={search}
+  onChangeText={setSearch}
+/>
+
+
+
+<FlatList
+  data={filteredProducts}
+  numColumns={2}
+  scrollEnabled={false}
+  columnWrapperStyle={{
+    justifyContent: "space-between",
+  }}
+  keyExtractor={(item) => item.id.toString()}
+ renderItem={({ item }) => (
+  <TouchableOpacity
+   style={[
+  styles.productCard,
+  {
+    backgroundColor: darkMode
+      ? "#2C2C2C"
+      : "#fff",
+  },
+]}
+    onPress={() =>
+      navigation.navigate("ProductDetails", {
+        product: item,
+      })
+    }
+  >
+
+    <TouchableOpacity
+      onPress={() => toggleFavorite(item)}
+      style={{
+        position: "absolute",
+        right: 10,
+        top: 10,
+        zIndex: 10,
+      }}
+    >
+      <Ionicons
+        name={
+          favorites.find(
+            (fav) => fav.id === item.id
+          )
+            ? "heart"
+            : "heart-outline"
+        }
+        size={24}
+        color="red"
       />
-    </ScrollView>
+    </TouchableOpacity>
+
+    <Image
+      source={item.image}
+      style={styles.productImage}
+    />
+
+   <Text
+  style={[
+    styles.productName,
+    {
+      color: darkMode
+        ? "white"
+        : "black",
+    },
+  ]}
+>
+      {item.name[language]}
+    </Text>
+
+  </TouchableOpacity>
+)}
+
+      />
+       </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
     padding: 20,
   },
 
@@ -88,16 +244,13 @@ const styles = StyleSheet.create({
   welcome: {
     fontSize: 28,
     fontWeight: "bold",
-    color: colors.primaryDark,
   },
 
   subtitle: {
     marginTop: 8,
-    color: colors.text,
   },
 
   banner: {
-    backgroundColor: colors.primary,
     padding: 25,
     borderRadius: 20,
     marginBottom: 25,
@@ -118,36 +271,72 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
-    color: colors.text,
   },
 
   productCard: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 10,
-    margin: 5,
-    width: 170,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 20,
+    padding: 12,
+    margin: 8,
+    flex: 1,
+    maxWidth: "47%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
   productImage: {
-    width: "100%",
+    width: 120,
     height: 120,
-    borderRadius: 12,
-    resizeMode: "cover",
+    borderRadius: 15,
+    resizeMode: "contain",
   },
 
   productName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     marginTop: 10,
+    textAlign: "center",
   },
 
   price: {
-    marginTop: 8,
-    color: colors.primaryDark,
+    marginTop: 6,
+    color: "#C9A227",
     fontWeight: "bold",
     fontSize: 18,
+  },
+
+  languageContainer: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: 20,
+},
+
+langButton: {
+  backgroundColor: "#fff",
+  paddingVertical: 15,
+  width: "30%",
+  borderRadius: 15,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowRadius: 5,
+  elevation: 3,
+},
+
+
+langText: {
+  fontSize: 16,
+  fontWeight: "bold",
+  color: "#11972c",
+},
+
+  searchInput: {
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
 });

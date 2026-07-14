@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useContext,
+} from "react";
 import {
   View,
   Text,
@@ -10,7 +13,6 @@ import {
 
 import colors from "../theme/colors";
 import { loginUser } from "../services/authService";
-import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 export default function LoginScreen({ navigation }) {
@@ -21,16 +23,24 @@ export default function LoginScreen({ navigation }) {
 const handleLogin = async () => {
   try {
     console.log("LOGIN CLICKED");
-    const data = await loginUser(email, password);
+
+    const data = await loginUser(
+      email,
+      password
+    );
+
     console.log("RESPONSE:", data);
-    console.log("USER DATA:", data.user);
 
     setUser(data.user);
 
-Alert.alert("Success", data.message);
+    Alert.alert("Success", data.message);
 
-navigation.navigate("Home");
- } catch (error) {
+    if (data.user.role === "admin") {
+      navigation.replace("Admin");
+    } else {
+      navigation.replace("Home");
+    }
+  } catch (error) {
       console.log(
        error.response?.data
 );

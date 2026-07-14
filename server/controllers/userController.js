@@ -18,8 +18,17 @@ export const registerUser = async (req, res) => {
     console.log("STEP 1");
 
     const existingUser = await User.findOne({
-      email,
-    });
+  $or: [
+    { email },
+    { nationalId },
+  ],
+});
+
+if (existingUser) {
+  return res.status(400).json({
+    message: "Email or National ID already exists",
+  });
+}
 
     console.log("STEP 2");
 
@@ -47,6 +56,7 @@ export const registerUser = async (req, res) => {
       phone,
       birthDate,
       password,
+      role: "user",
     });
 
     console.log("STEP 4");
@@ -86,6 +96,8 @@ export const loginUser = async (req, res) => {
         message: "Invalid password",
       });
     }
+    console.log("USER FROM DB:", user);
+    console.log("ROLE:", user.role);
 
     const token = jwt.sign(
       {
@@ -98,19 +110,77 @@ export const loginUser = async (req, res) => {
     );
 
     res.json({
-      message: "Login successful",
-      token,
-      user: {
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        nationalId: user.nationalId,
-        birthDate: user.birthDate,
-      },
-    });
+  message: "Login successful",
+  token,
+  user: {
+    _id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    phone: user.phone,
+    nationalId: user.nationalId,
+    birthDate: user.birthDate,
+    role: user.role,
+  },
+});
   } catch (error) {
     console.log(error);
 
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const {
+      email,
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    const hashedPassword =
+      await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    res.json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+
+    res.json(users);
+  } catch (error) {
     res.status(500).json({
       message: error.message,
     });
